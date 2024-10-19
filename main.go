@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/csv"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,7 +17,7 @@ import (
 
 const (
 	token = "6psPGzlj7kobkTAl6zGQyVoY5BoriJmC7olf5XLB6k954GQ5Yt9Z+y2JLg=="
-	stop  = 1
+	stop  = 10000
 )
 
 type params struct {
@@ -56,7 +57,8 @@ func main() {
 			defer wt.Done()
 		}()
 		crawlCount += len(resp.ItemList)
-		time.Sleep(3 * time.Second)
+		fmt.Println("当前已爬取数据：", crawlCount, "条")
+		time.Sleep(4 * time.Second)
 	}
 	wt.Wait()
 }
@@ -102,7 +104,13 @@ func getData(p *params) (*model.VideoResp, error) {
 		fmt.Println("反序列化时错误：", err)
 		return nil, err
 	}
-	fmt.Println(string(body))
+	fmt.Println("抓取数据成功，一共", len(resp.ItemList), "条，正在检查...")
+	if resp.Code != 200 {
+		return nil, errors.New("当前状态码不是200")
+	}
+	if resp.HasMore != 1 {
+		return nil, errors.New("没有更多数据了")
+	}
 
 	return &resp, nil
 }
