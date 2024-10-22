@@ -19,5 +19,7 @@ go run main.go
 
 This project is developed solely for educational purposes and is not intended for any illegal or unethical use.
 It demonstrates the use of third-party APIs and does not aim to bypass any legal restrictions or terms of service set by the API providers.
+
 The author holds no responsibility for how others may use this code.
+
 Please ensure that your use of this project complies with all relevant laws and the terms of service of any APIs you utilize.
