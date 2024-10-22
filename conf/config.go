@@ -9,6 +9,7 @@ import (
 type Config struct {
 	Token    string `json:"token"`
 	MaxRetry int32  `json:"maxRetry"`
+	Cookies  string `json:"cookies"`
 }
 
 // AppConfig 全局变量，用于存储加载的配置

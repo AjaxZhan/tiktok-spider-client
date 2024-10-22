@@ -1,4 +1,5 @@
 {
   "token" : "6psPGzlj7kobkTAl6zGQyVoY5BoriJmC7olf5XLB6k954GQ5Yt9Z+y2JLg==",
-  "maxRetry" : 3
+  "maxRetry" : 3,
+  "cookies": "msToken=qc0V9UAOAIv-z1hmPDyVDQ6g23mvMPi2-7RFNWf75rGsxPzLUhIw4dsiBLJPQ3IkQSVgddtCWpgmozwv_SakVAZ_woqJOUQEKgK5r4NvGD5rJoyGppL95X-i8P09HeX0P8TbHgP1IvMK69StGr-P8aKg5vs=; Path=/; Domain=tiktok.com; Expires=Fri, 01 Nov 2024 10:36:25 GMT; Secure; SameSite=None"
 }

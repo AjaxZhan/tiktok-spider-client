@@ -21,11 +21,9 @@ func crawlYoutube() {
 
 func crawlTiktokWeb() {
 	params := model.TiktokWebParamsSend{
-		Keyword:  "China travel",
-		Offset:   0,
-		SearchId: "",
-		Cookie:   "",
-		Count:    "12",
+		Keyword: "China travel",
+		Offset:  0,
+		Count:   1,
 	}
 	tiktokWebClient := client.NewTiktokWebClient(params)
 	tiktokWebClient.SearchVideoAndStore()

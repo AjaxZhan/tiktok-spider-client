@@ -139,7 +139,7 @@ type TiktokWebResponse struct {
 
 type TiktokWebParamsSend struct {
 	Keyword  string `json:"keyword"`
-	Count    string `json:"count"`
+	Count    int    `json:"count"`
 	Offset   int    `json:"offset"`
 	SearchId string `json:"search_id"`
 	Cookie   string `json:"cookie"`

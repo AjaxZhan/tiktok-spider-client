@@ -35,7 +35,7 @@ func NewYoutubeClient(params model.YoutubeParams) *YoutubeClient {
 		httpClient: &http.Client{
 			Timeout: 20 * time.Second,
 		},
-		baseFilePrefix: "./output/" + time.UnixDate,
+		baseFilePrefix: "./output/" + time.Now().Format("2006-01-02 15:01:05"),
 		retry:          0,
 	}
 }
@@ -122,16 +122,16 @@ func (yc *YoutubeClient) SearchVideo() (*model.YoutubeResponse, error) {
 		//  保存当前爬虫参数
 		fmt.Println("警告：api出现错误，状态码=", resp.Code)
 		fmt.Println("保存爬虫参数：")
-		_ = utils.SaveToJSON(resp.Params, time.UnixDate+"-params-code_err"+".json")
+		_ = utils.SaveToJSON(resp.Params, "./log/"+time.Now().Format("2006-01-02 15:01:05")+"-params-code_err"+".json")
 		fmt.Println("保存最新结果:")
-		_ = utils.SaveToJSON(resp.Data, time.UnixDate+"-crawl_data-code_err"+".json")
+		_ = utils.SaveToJSON(resp.Data, "./log/"+time.Now().Format("2006-01-02 15:01:05")+"-crawl_data-code_err"+".json")
 		return nil, errors.New("当前状态码不是200,code =" + string(resp.Code))
 	}
 	if resp.Data.NumberOfVideos == 0 {
 		fmt.Println("警告：爬取到的数据为0条，正在保存爬虫参数和最新结果")
 		//  保存当前爬虫参数
-		_ = utils.SaveToJSON(resp.Params, time.UnixDate+"-params-num_err"+".json")
-		_ = utils.SaveToJSON(resp.Data, time.UnixDate+"-crawl_data-num_err"+".json")
+		_ = utils.SaveToJSON(resp.Params, "./log/"+time.Now().Format("2006-01-02 15:01:05")+"-params-num_err"+".json")
+		_ = utils.SaveToJSON(resp.Data, "./log/"+time.Now().Format("2006-01-02 15:01:05")+"-crawl_data-num_err"+".json")
 		if yc.retry == conf.AppConfig.MaxRetry {
 			return nil, errors.New("爬到的数据为0并且超过最大重试次数")
 		}
