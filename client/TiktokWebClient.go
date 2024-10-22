@@ -18,10 +18,10 @@ import (
 )
 
 type TiktokWebClient struct {
-	params         model.TiktokWebParams // 爬虫参数
-	baseUrl        string                // api基础路径
-	retry          int32                 // 重试次数
-	baseFilePrefix string                // 输出文件前缀
+	params         model.TiktokWebParamsSend // 爬虫参数
+	baseUrl        string                    // api基础路径
+	retry          int32                     // 重试次数
+	baseFilePrefix string                    // 输出文件前缀
 
 	httpClient *http.Client // http客户端
 
@@ -29,14 +29,14 @@ type TiktokWebClient struct {
 	mx sync.Mutex
 }
 
-func NewTiktokWebClient(params model.TiktokWebParams) *TiktokWebClient {
+func NewTiktokWebClient(params model.TiktokWebParamsSend) *TiktokWebClient {
 	return &TiktokWebClient{
 		params:  params,
 		baseUrl: "https://api.tikhub.io/api/v1/tiktok/web/fetch_search_video",
 		httpClient: &http.Client{
 			Timeout: 20 * time.Second,
 		},
-		baseFilePrefix: time.UnixDate,
+		baseFilePrefix: "./output/" + time.UnixDate,
 		retry:          0,
 	}
 }
@@ -72,7 +72,7 @@ func (yc *TiktokWebClient) SearchVideoAndStore() {
 		fmt.Println("第", i, "轮爬虫结束，当前一共爬取", total, "条")
 		// change params
 		yc.params.SearchId = resp.Data.LogPb.ImprId
-		yc.params.Offset = resp.Data.Cursor
+		yc.params.Offset = int(resp.Data.Cursor)
 		i += 1
 		// sleep
 		time.Sleep(1 * time.Second)
@@ -85,7 +85,7 @@ func (yc *TiktokWebClient) SearchVideo() (*model.TiktokWebResponse, error) {
 	// send http request
 	url := yc.baseUrl + "?keyword=" + url2.PathEscape(yc.params.Keyword) +
 		"&count=" + yc.params.Count +
-		"&offset=" + strconv.Itoa(int(yc.params.Offset)) +
+		"&offset=" + strconv.Itoa(yc.params.Offset) +
 		"&search_id=" + yc.params.SearchId +
 		"&cookie=" + yc.params.Cookie
 	req, err := http.NewRequest("GET", url, nil)

@@ -133,14 +133,22 @@ type AuthorStats struct {
 type TiktokWebResponse struct {
 	Code   int32            `json:"code"`
 	Router string           `json:"router"`
-	Params TiktokWebParams  `json:"params"`
+	Params TiktokWebParamsR `json:"params"`
 	Data   TiktokDataDetail `json:"data"`
 }
 
-type TiktokWebParams struct {
+type TiktokWebParamsSend struct {
 	Keyword  string `json:"keyword"`
 	Count    string `json:"count"`
-	Offset   int32  `json:"offset"`
+	Offset   int    `json:"offset"`
+	SearchId string `json:"search_id"`
+	Cookie   string `json:"cookie"`
+}
+
+type TiktokWebParamsR struct {
+	Keyword  string `json:"keyword"`
+	Count    string `json:"count"`
+	Offset   string `json:"offset"`
 	SearchId string `json:"search_id"`
 	Cookie   string `json:"cookie"`
 }

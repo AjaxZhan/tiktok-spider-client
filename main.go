@@ -20,7 +20,7 @@ func crawlYoutube() {
 }
 
 func crawlTiktokWeb() {
-	params := model.TiktokWebParams{
+	params := model.TiktokWebParamsSend{
 		Keyword:  "China travel",
 		Offset:   0,
 		SearchId: "",

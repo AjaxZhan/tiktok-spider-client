@@ -18,11 +18,11 @@ import (
 )
 
 type YoutubeClient struct {
-	params  model.YoutubeParams // 爬虫参数
-	baseUrl string              // api基础路径
-	retry   int32               // 重试次数
-
-	httpClient *http.Client // http客户端
+	params         model.YoutubeParams // 爬虫参数
+	baseUrl        string              // api基础路径
+	retry          int32               // 重试次数
+	baseFilePrefix string              // 输出文件前缀
+	httpClient     *http.Client        // http客户端
 
 	wt sync.WaitGroup
 	mx sync.Mutex
@@ -35,7 +35,8 @@ func NewYoutubeClient(params model.YoutubeParams) *YoutubeClient {
 		httpClient: &http.Client{
 			Timeout: 20 * time.Second,
 		},
-		retry: 0,
+		baseFilePrefix: "./output/" + time.UnixDate,
+		retry:          0,
 	}
 }
 
@@ -141,7 +142,7 @@ func (yc *YoutubeClient) SearchVideo() (*model.YoutubeResponse, error) {
 }
 
 func (yc *YoutubeClient) writeCSV(data *model.YoutubeResponse) error {
-	outputName := "output_youtube.csv"
+	outputName := yc.baseFilePrefix + "_output_youtube.csv"
 
 	file, err := os.OpenFile(outputName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
