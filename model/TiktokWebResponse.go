@@ -129,3 +129,38 @@ type AuthorStats struct {
 	DiggCount      int `json:"diggCount"`
 	Heart          int `json:"heart"`
 }
+
+type TiktokWebResponse struct {
+	Code   int32            `json:"code"`
+	Router string           `json:"router"`
+	Params TiktokWebParams  `json:"params"`
+	Data   TiktokDataDetail `json:"data"`
+}
+
+type TiktokWebParams struct {
+	Keyword  string `json:"keyword"`
+	Count    string `json:"count"`
+	Offset   int32  `json:"offset"`
+	SearchId string `json:"search_id"`
+	Cookie   string `json:"cookie"`
+}
+
+type TiktokDataDetail struct {
+	StatusCode int32  `json:"status_code"`
+	ItemList   []Item `json:"item_list"`
+	HasMore    int32  `json:"has_more"`
+	Cursor     int32  `json:"cursor"`
+	extra      `json:"extra"`
+	LogPb      struct {
+		ImprId string `json:"impr_id"`
+	} `json:"log_pb"`
+	Backtrace string `json:"backtrace"`
+}
+
+type extra struct {
+	Now             int64         `json:"now"`
+	Logid           string        `json:"logid"`
+	FatalItemIds    []interface{} `json:"fatal_item_ids"`
+	SearchRequestId string        `json:"search_request_id"`
+	ApiDebugInfo    string        `json:"api_debug_info"`
+}
