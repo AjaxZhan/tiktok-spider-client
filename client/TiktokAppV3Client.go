@@ -144,7 +144,7 @@ func (yc *TiktokAppV3Client) SearchVideo() (*model.TiktokAppV3Response, error) {
 func (yc *TiktokAppV3Client) SearchVideoByTag() (*model.TiktokTagResponse, error) {
 
 	// send http request
-	url := yc.tagUrl + "?ch_id" + yc.tagParams.ChId +
+	url := yc.tagUrl + "?ch_id=" + yc.tagParams.ChId +
 		"&cursor=" + strconv.Itoa(yc.tagParams.Cursor) +
 		"&count=" + strconv.Itoa(yc.tagParams.Count)
 
