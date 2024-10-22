@@ -29,12 +29,25 @@ func crawlTiktokWeb() {
 	tiktokWebClient.SearchVideoAndStore()
 }
 
+func crawlTiktokAppV3() {
+	params := model.TiktokAppV3Params{
+		Keyword:     "china travel",
+		Offset:      0,
+		Count:       20,
+		SortType:    0,
+		PublishTime: 0,
+	}
+	v3Client := client.NewTiktokV3Client(params)
+	v3Client.SearchVideoAndStore()
+}
+
 func main() {
 	// 加载配置
 	loadConf()
 	// 开启爬虫
 	//crawlYoutube()
-	crawlTiktokWeb()
+	//crawlTiktokWeb()
+	crawlTiktokAppV3()
 }
 
 // 加载配置
