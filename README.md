@@ -1,8 +1,8 @@
-# TikTok-Spider
+# TikTok-Spider-Client
 
 ## Introduction
 
-TikTok-Spider is a web-spider program used to get TikTok video information, only for educational usage.
+TikTok-Spider-Client is a web-spider program used to get TikTok video information, only for educational usage.
 
 This program is basically used to finish academic social analysis.
 
