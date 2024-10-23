@@ -32,14 +32,14 @@ func crawlTiktokWeb() {
 func crawlTiktokAppV3() {
 	params := model.TiktokAppV3Params{
 		Keyword:     "china travel",
-		Offset:      260,
+		Offset:      660,
 		Count:       20,
 		SortType:    0,
 		PublishTime: 0,
 	}
 	tagParams := model.TiktokTagParams{
 		ChId:   "74640468", // #chinatravel
-		Cursor: 0,
+		Cursor: 4380,
 		Count:  10,
 	}
 	v3Client := client.NewTiktokV3Client(params, tagParams)

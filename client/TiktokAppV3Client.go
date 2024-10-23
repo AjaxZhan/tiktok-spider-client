@@ -22,6 +22,7 @@ type TiktokAppV3Client struct {
 	tagUrl         string                  // 标签搜索url
 	tagParams      model.TiktokTagParams   // 标签搜索参数
 	retry          int32                   // 重试次数
+	isRetry        bool                    // 重试标记
 	baseFilePrefix string                  // 输出文件前缀
 
 	httpClient *http.Client // http客户端
@@ -38,6 +39,7 @@ func NewTiktokV3Client(params model.TiktokAppV3Params, tagParams model.TiktokTag
 		},
 		baseFilePrefix: "./output_tiktok_app/" + time.Now().Format("2006-01-02 15:01:05"),
 		retry:          0,
+		isRetry:        false,
 	}
 }
 
@@ -204,6 +206,9 @@ func (yc *TiktokAppV3Client) SearchVideoByTag() (*model.TiktokTagResponse, error
 			return nil, errors.New("爬到的数据为0并且超过最大重试次数")
 		}
 		yc.retry += 1
+		yc.isRetry = true
+	} else {
+		yc.isRetry = false
 	}
 
 	return &resp, nil
@@ -232,7 +237,9 @@ func (yc *TiktokAppV3Client) SearchVideoByTagAndStore() {
 		total += dataLen
 		fmt.Println("第", i, "轮爬虫结束，当前一共爬取", total, "条")
 		// change params
-		yc.tagParams.Cursor = resp.Data.Cursor
+		if !yc.isRetry {
+			yc.tagParams.Cursor = resp.Data.Cursor
+		}
 		i += 1
 		// sleep
 		time.Sleep(1 * time.Second)
