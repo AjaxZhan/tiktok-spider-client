@@ -122,10 +122,10 @@ func main() {
 	//crawlTiktokAppV3()
 
 	//数据保存到CSV
-	saveToCSV()
+	//saveToCSV()
 
 	// 更新作者信息
-	//UpdateAuthorData()
+	UpdateAuthorData()
 }
 
 // 加载配置

@@ -153,6 +153,11 @@ func NewTiktokAppV3Repository() *TiktokAppV3Repository {
 		authorInfoBaseUrl: "https://douyin.wtf/api/tiktok/web/fetch_user_profile",
 		httpClient: &http.Client{
 			Timeout: time.Second * 30,
+			Transport: &http.Transport{
+				MaxIdleConns:        200,              // 总的最大空闲连接数，适用于高并发环境
+				MaxIdleConnsPerHost: 100,              // 每个主机的最大空闲连接数
+				IdleConnTimeout:     30 * time.Second, // 空闲连接的超时时间
+			},
 		},
 	}
 }
@@ -388,7 +393,7 @@ func (repo *TiktokAppV3Repository) UpdateAuthorData() error {
 // UpdateAuthorData2 使用并发编程的方式来更新作者信息
 func (repo *TiktokAppV3Repository) UpdateAuthorData2() error {
 	// Open CSV file for reading
-	file, err := os.Open("./tiktok_app_v3_travel.csv")
+	file, err := os.Open("./tiktok_app_v3_travel_updated.csv")
 	if err != nil {
 		fmt.Println("无法打开文件:", err)
 		return err
@@ -405,10 +410,31 @@ func (repo *TiktokAppV3Repository) UpdateAuthorData2() error {
 
 	var wg sync.WaitGroup
 	recordChan := make(chan []string)
-	errorChan := make(chan error)
+	errorChan := make(chan error, 10000)
 	// goroutine pool
 	const maxGoroutines = 100 // 设置最大 Goroutine 数量
 	guard := make(chan struct{}, maxGoroutines)
+	var mu sync.Mutex // 用于写操作的互斥锁
+
+	// 定时刷盘 Goroutine
+	go func() {
+		ticker := time.NewTicker(10 * time.Second) // 每10秒刷盘一次
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				mu.Lock()
+				fmt.Println("定时刷盘...")
+				err := writeUpdatedRecordsToFile(records)
+				if err != nil {
+					fmt.Println("刷盘时发生错误:", err)
+				}
+				mu.Unlock()
+			}
+		}
+	}()
+
 	// Start a goroutine to update records as they are processed
 	go func() {
 		for record := range recordChan {
@@ -421,22 +447,26 @@ func (repo *TiktokAppV3Repository) UpdateAuthorData2() error {
 		}
 	}()
 
+	rateLimiter := time.Tick(2000 * time.Millisecond) // 控制请求间隔
+
 	// Process records concurrently
 	for i, row := range records {
-		if i == 0 || row[4] == "" {
-			// Skip header or rows without authorName
+		if i == 0 || row[4] == "" || row[9] != "" {
+			// Skip header or rows without authorName or updated record
 			continue
 		}
+		<-rateLimiter // 控制请求速率
 		wg.Add(1)
 		guard <- struct{}{}
 		go func(row []string) {
 			defer wg.Done()
 			defer func() { <-guard }()
 			authorName := row[4]
-			fmt.Println("作者名字：", authorName)
-
-			url := repo.authorInfoBaseUrl + "?uniqueId=" + url2.PathEscape(authorName)
+			secUid := row[25]
+			fmt.Printf("作者名字：%s，sec_uid=%s\n", authorName, secUid)
+			url := repo.authorInfoBaseUrl + "?secUid=" + url2.QueryEscape(secUid)
 			request, err := http.NewRequest("GET", url, nil)
+			request.Header.Add("Accept", "application/json")
 			if err != nil {
 				fmt.Println("创建请求时错误：", err)
 				errorChan <- err
@@ -460,8 +490,7 @@ func (repo *TiktokAppV3Repository) UpdateAuthorData2() error {
 			var authData tiktokAuthorWebData
 			err = json.Unmarshal(body, &authData)
 			if err != nil {
-				fmt.Println("解析JSON出错:", err)
-				fmt.Println(string(body))
+				fmt.Printf("解析JSON出错:%v\n，请求体%v,作者名字：%s，secuid=%s\n", err, string(body), authorName, secUid)
 				errorChan <- err
 				return
 			}
@@ -478,7 +507,7 @@ func (repo *TiktokAppV3Repository) UpdateAuthorData2() error {
 			row[12] = fmt.Sprintf("%v", authData.Data.UserInfo.stats.diggCount)
 
 			recordChan <- row
-			fmt.Println("更新成功！")
+			fmt.Printf("更新成功！作者名字：%s\n", authorName)
 		}(row)
 	}
 
@@ -513,5 +542,22 @@ func (repo *TiktokAppV3Repository) UpdateAuthorData2() error {
 	writer.Flush()
 
 	fmt.Println("CSV文件更新完毕")
+	return nil
+}
+
+// writeUpdatedRecordsToFile 将记录写入文件
+func writeUpdatedRecordsToFile(records [][]string) error {
+	writeFile, err := os.Create("./tiktok_app_v3_travel_updated.csv")
+	if err != nil {
+		return err
+	}
+	defer writeFile.Close()
+
+	writer := csv.NewWriter(writeFile)
+	err = writer.WriteAll(records)
+	if err != nil {
+		return err
+	}
+	writer.Flush()
 	return nil
 }
