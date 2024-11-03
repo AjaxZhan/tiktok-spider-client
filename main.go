@@ -43,8 +43,8 @@ func crawlTiktokAppV3() {
 		PublishTime: 0,
 	}
 	tagParams := model.TiktokTagParams{
-		ChId:   "74640468", // #chinatravel
-		Cursor: 7070,
+		ChId:   "7884", // #travel
+		Cursor: 3340,
 		Count:  10,
 	}
 	v3Client := client.NewTiktokV3Client(params, tagParams)
@@ -61,7 +61,7 @@ func saveToCSV() {
 	//}
 
 	// 匹配文件
-	dir := "./tiktok_app_v3"
+	dir := "./tiktok_app_v3_2"
 
 	// 查找所有 .json 文件
 	files, err := filepath.Glob(filepath.Join(dir, "*.json"))
@@ -97,11 +97,19 @@ func saveToCSV() {
 			continue
 		}
 		// 过滤出符合条件的文件（第一个数字 1-66，第二个数字范围 1-10）
-		if firstNum >= 1 && firstNum <= 66 && secondNum >= 1 && secondNum <= 10 {
+		if firstNum >= 1 && firstNum <= 200 && secondNum >= 1 && secondNum <= 10 {
 			fmt.Println("正在处理文件:", filename)
 			// 执行你要对文件的处理逻辑
 			_ = repository.DoneOne(file)
 		}
+	}
+}
+
+func UpdateAuthorData() {
+	r := repo.NewTiktokAppV3Repository()
+	err := r.UpdateAuthorData2()
+	if err != nil {
+		fmt.Println("更新作者信息时发生错误！", err.Error())
 	}
 }
 
@@ -113,8 +121,11 @@ func main() {
 	//crawlTiktokWeb()
 	//crawlTiktokAppV3()
 
-	// 数据保存到CSV
+	//数据保存到CSV
 	saveToCSV()
+
+	// 更新作者信息
+	//UpdateAuthorData()
 }
 
 // 加载配置

@@ -4,19 +4,43 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	url2 "net/url"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 )
 
 // 此文件将爬取到的数据持久化数据库或者csv文件中
 
+// TiktokAuthorWebData 爬取作者相关信息
+type tiktokAuthorWebData struct {
+	Code int `json:"code"`
+	Data struct {
+		UserInfo struct {
+			stats struct {
+				followerCount int `json:"followerCount"`
+				heartCount    int `json:"heartCount"`
+				videoCount    int `json:"videoCount"`
+				diggCount     int `json:"diggCount"`
+			} `json:"stats"`
+		} `json:"userInfo"`
+		User struct {
+			verified bool `json:"verified"`
+		} `json:"user"`
+	} `json:"data"`
+}
+
+// TiktokAppV3WebData 从TikTok爬到的数据
 type TiktokAppV3WebData struct {
 	Author struct {
 		Nickname  string `json:"nickname"`
 		Region    string `json:"region"`
 		Uid       string `json:"uid"`
 		Signature string `json:"signature"`
+		SecUid    string `json:"sec_uid"`
 	} `json:"author"`
 	Statistics struct {
 		CollectCount  int `json:"collect_count"`
@@ -45,7 +69,6 @@ type TiktokAppV3WebData struct {
 	} `json:"video"`
 }
 
-// 数据模型
 type author struct {
 	AuthorName       string // author.nickname
 	Region           string // author.region
@@ -73,6 +96,7 @@ type Music struct {
 	MusicAuthor string // music.author
 }
 
+// TiktokAppV3Vo 给csv文件写入的数据格式，采用组合的方式
 type TiktokAppV3Vo struct {
 	Id    string // aweme_id
 	Desc  string // desc
@@ -86,46 +110,54 @@ type TiktokAppV3Vo struct {
 	VideoStatistics
 }
 
-// 表头
+// CSV表头
 var csvHeaders = []string{
-	"Id",               // aweme_id
-	"Desc",             // desc
-	"Cover",            // cover
-	"Url",              // share_url
-	"AuthorName",       // author.nickname
-	"Region",           // author.region
-	"AuthorId",         // author.uid
-	"IsVerify",         // author.is_verify
-	"AuthorSignature",  // author.signature
-	"AuthorFollower",   // author.follower_count
-	"AuthorHeartCount", // author.total_favorited
-	"AuthorVideoCount", // author.aweme_count
-	"AuthorDiggCount",  // author.digg_count
-	"TagList",          // 拼接content_desc_extra.hashtag_name
-	"CreateTime",       // create_time
-	"Duration",         // video.duration
-	"MusicTitle",       // music.album
-	"MusicUrl",         // music.play_url.uri
-	"MusicAuthor",      // music.author
-	"CollectCount",     // statistics.collect_count
-	"CommentCount",     // statistics.comment_count
-	"DiggCount",        // statistics.digg_count
-	"DownloadCount",    // statistics.download_count
-	"PlayCount",        // statistics.play_count
-	"ShareCount",       // statistics.share_count
+	"Id",               // aweme_id 0
+	"Desc",             // desc 1
+	"Cover",            // cover 2
+	"Url",              // share_url 3
+	"AuthorName",       // author.nickname 4
+	"Region",           // author.region 5
+	"AuthorId",         // author.uid 6
+	"IsVerify",         // author.is_verify 7
+	"AuthorSignature",  // author.signature 8
+	"AuthorFollower",   // author.follower_count 9
+	"AuthorHeartCount", // author.total_favorited 10
+	"AuthorVideoCount", // author.aweme_count 11
+	"AuthorDiggCount",  // author.digg_count 12
+	"TagList",          // 拼接content_desc_extra.hashtag_name 13
+	"CreateTime",       // create_time 14
+	"Duration",         // video.duration 15
+	"MusicTitle",       // music.album 16
+	"MusicUrl",         // music.play_url.uri 17
+	"MusicAuthor",      // music.author 18
+	"CollectCount",     // statistics.collect_count 19
+	"CommentCount",     // statistics.comment_count 20
+	"DiggCount",        // statistics.digg_count 21
+	"DownloadCount",    // statistics.download_count 22
+	"PlayCount",        // statistics.play_count 23
+	"ShareCount",       // statistics.share_count 24
+	"SecUid",           // author.sec_uid 25
 }
 
 // TiktokAppV3Repository 数据仓库
 type TiktokAppV3Repository struct {
-	csvPath string
+	csvPath           string
+	authorInfoBaseUrl string
+	httpClient        *http.Client
 }
 
 func NewTiktokAppV3Repository() *TiktokAppV3Repository {
 	return &TiktokAppV3Repository{
-		csvPath: "./tiktok_app_v3.csv",
+		csvPath:           "./tiktok_app_v3_travel.csv",
+		authorInfoBaseUrl: "https://douyin.wtf/api/tiktok/web/fetch_user_profile",
+		httpClient: &http.Client{
+			Timeout: time.Second * 30,
+		},
 	}
 }
 
+// SaveToCSV 将数据写入CSV文件
 func (repo *TiktokAppV3Repository) SaveToCSV(datas []TiktokAppV3WebData) error {
 
 	// 创建CSV文件
@@ -214,6 +246,8 @@ func (repo *TiktokAppV3Repository) SaveToCSV(datas []TiktokAppV3WebData) error {
 				row = append(row, strconv.Itoa(data.Statistics.PlayCount))
 			case "ShareCount":
 				row = append(row, strconv.Itoa(data.Statistics.ShareCount))
+			case "SecUid":
+				row = append(row, data.Author.SecUid)
 			default:
 				row = append(row, "") // 未知字段留空
 			}
@@ -226,6 +260,7 @@ func (repo *TiktokAppV3Repository) SaveToCSV(datas []TiktokAppV3WebData) error {
 	return nil
 }
 
+// LoadFromJson 读取JSON文件
 func (repo *TiktokAppV3Repository) LoadFromJson(path string) ([]TiktokAppV3WebData, error) {
 	// 读取JSON文件
 	jsonFile, err := os.ReadFile(path)
@@ -241,6 +276,7 @@ func (repo *TiktokAppV3Repository) LoadFromJson(path string) ([]TiktokAppV3WebDa
 	return data, nil
 }
 
+// DoneOne 执行一次读取JSON并写CSV操作
 func (repo *TiktokAppV3Repository) DoneOne(path string) error {
 	// json路径先根据本地数据写死
 	data, err := repo.LoadFromJson(path)
@@ -257,7 +293,225 @@ func (repo *TiktokAppV3Repository) DoneOne(path string) error {
 	return nil
 }
 
-func (repo *TiktokAppV3Repository) DoneBatch() error {
-	// json路径先根据本地数据写死
+func (repo *TiktokAppV3Repository) UpdateAuthorData() error {
+	// 打开CSV文件
+	file, err := os.Open("./tiktok_app_v3_travel.csv")
+	if err != nil {
+		fmt.Println("无法打开文件:", err)
+		return err
+	}
+	defer file.Close()
+
+	// 读取CSV内容
+	reader := csv.NewReader(file)
+	records, err := reader.ReadAll()
+	if err != nil {
+		fmt.Println("读取CSV文件出错:", err)
+		return err
+	}
+
+	// 遍历每一行并处理
+	for i, row := range records {
+		if i == 0 {
+			// 跳过表头
+			continue
+		}
+
+		authorName := row[4]
+		fmt.Println("作者名字：", authorName)
+		// 发送HTTP请求获取粉丝和点赞数量
+		url := repo.authorInfoBaseUrl + "?uniqueId=" + url2.PathEscape(authorName)
+		request, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			fmt.Println("创建请求时错误：", err)
+			continue
+		}
+		res, err := repo.httpClient.Do(request)
+		if err != nil {
+			fmt.Println("请求失败:", err)
+			continue
+		}
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				fmt.Println("关闭io时错误：", err)
+			}
+		}(res.Body)
+		// read http response
+		body, err := io.ReadAll(res.Body)
+		if err != nil {
+			fmt.Println("读取响应时错误：", err)
+			continue
+		}
+		// unmarshal
+		var authData tiktokAuthorWebData
+		err = json.Unmarshal(body, &authData)
+		if err != nil {
+			fmt.Println("解析JSON出错:", err)
+			continue
+		}
+		if authData.Code != 200 {
+			fmt.Println("爬取作者信息时发生错误，状态码是：" + strconv.Itoa(authData.Code))
+			continue
+		}
+		fmt.Println("爬取作者信息成功：")
+
+		// 更新CSV
+		row[7] = fmt.Sprintf("%v", authData.Data.User.verified)
+		row[9] = fmt.Sprintf("%v", authData.Data.UserInfo.stats.followerCount)
+		row[10] = fmt.Sprintf("%v", authData.Data.UserInfo.stats.heartCount)
+		row[11] = fmt.Sprintf("%v", authData.Data.UserInfo.stats.videoCount)
+		row[12] = fmt.Sprintf("%v", authData.Data.UserInfo.stats.diggCount)
+		records[i] = row
+
+		fmt.Println("更新第", i, "行成功！")
+	}
+
+	// 将修改后的内容重新写回CSV文件
+	file, err = os.Create("tiktok_app_v3_author_update.csv")
+	if err != nil {
+		fmt.Println("无法创建文件:", err)
+		return err
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	err = writer.WriteAll(records)
+	if err != nil {
+		fmt.Println("写入CSV文件出错:", err)
+		return err
+	}
+	fmt.Println("[成功在CSV文件中添加作者信息]")
+	return nil
+}
+
+// UpdateAuthorData2 使用并发编程的方式来更新作者信息
+func (repo *TiktokAppV3Repository) UpdateAuthorData2() error {
+	// Open CSV file for reading
+	file, err := os.Open("./tiktok_app_v3_travel.csv")
+	if err != nil {
+		fmt.Println("无法打开文件:", err)
+		return err
+	}
+	defer file.Close()
+
+	// Read CSV content
+	reader := csv.NewReader(file)
+	records, err := reader.ReadAll()
+	if err != nil {
+		fmt.Println("读取CSV文件出错:", err)
+		return err
+	}
+
+	var wg sync.WaitGroup
+	recordChan := make(chan []string)
+	errorChan := make(chan error)
+	// goroutine pool
+	const maxGoroutines = 100 // 设置最大 Goroutine 数量
+	guard := make(chan struct{}, maxGoroutines)
+	// Start a goroutine to update records as they are processed
+	go func() {
+		for record := range recordChan {
+			for i, rec := range records {
+				if rec[0] == record[0] {
+					records[i] = record
+					break
+				}
+			}
+		}
+	}()
+
+	// Process records concurrently
+	for i, row := range records {
+		if i == 0 || row[4] == "" {
+			// Skip header or rows without authorName
+			continue
+		}
+		wg.Add(1)
+		guard <- struct{}{}
+		go func(row []string) {
+			defer wg.Done()
+			defer func() { <-guard }()
+			authorName := row[4]
+			fmt.Println("作者名字：", authorName)
+
+			url := repo.authorInfoBaseUrl + "?uniqueId=" + url2.PathEscape(authorName)
+			request, err := http.NewRequest("GET", url, nil)
+			if err != nil {
+				fmt.Println("创建请求时错误：", err)
+				errorChan <- err
+				return
+			}
+			res, err := repo.httpClient.Do(request)
+			if err != nil {
+				fmt.Println("请求失败:", err)
+				errorChan <- err
+				return
+			}
+			defer res.Body.Close()
+
+			body, err := io.ReadAll(res.Body)
+			if err != nil {
+				fmt.Println("读取响应时错误：", err)
+				errorChan <- err
+				return
+			}
+
+			var authData tiktokAuthorWebData
+			err = json.Unmarshal(body, &authData)
+			if err != nil {
+				fmt.Println("解析JSON出错:", err)
+				fmt.Println(string(body))
+				errorChan <- err
+				return
+			}
+			if authData.Code != 200 {
+				fmt.Println("爬取作者信息时发生错误，状态码是：" + strconv.Itoa(authData.Code))
+				return
+			}
+
+			// Update row with new data
+			row[7] = fmt.Sprintf("%v", authData.Data.User.verified)
+			row[9] = fmt.Sprintf("%v", authData.Data.UserInfo.stats.followerCount)
+			row[10] = fmt.Sprintf("%v", authData.Data.UserInfo.stats.heartCount)
+			row[11] = fmt.Sprintf("%v", authData.Data.UserInfo.stats.videoCount)
+			row[12] = fmt.Sprintf("%v", authData.Data.UserInfo.stats.diggCount)
+
+			recordChan <- row
+			fmt.Println("更新成功！")
+		}(row)
+	}
+
+	// Wait for all goroutines to finish
+	go func() {
+		wg.Wait()
+		close(recordChan)
+		close(errorChan)
+	}()
+
+	// Check for errors during processing
+	for err := range errorChan {
+		if err != nil {
+			fmt.Println("发生错误：", err)
+		}
+	}
+
+	// Write updated records to CSV
+	writeFile, err := os.Create("./tiktok_app_v3_travel_updated.csv")
+	if err != nil {
+		fmt.Println("无法创建更新的文件:", err)
+		return err
+	}
+	defer writeFile.Close()
+
+	writer := csv.NewWriter(writeFile)
+	err = writer.WriteAll(records)
+	if err != nil {
+		fmt.Println("写入CSV文件时出错:", err)
+		return err
+	}
+	writer.Flush()
+
+	fmt.Println("CSV文件更新完毕")
 	return nil
 }

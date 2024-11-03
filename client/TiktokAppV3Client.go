@@ -228,7 +228,7 @@ func (yc *TiktokAppV3Client) SearchVideoByTagAndStore() {
 		dataLen := len(resp.Data.AwemeList)
 		// store
 		// 直接保存为json文件
-		err = utils.SaveToJSON(resp.Data.AwemeList, "./tiktok_app_v3/"+tempPrefix+"_"+strconv.Itoa(i)+"-"+
+		err = utils.SaveToJSON(resp.Data.AwemeList, "./tiktok_app_v3_2/"+tempPrefix+"_"+strconv.Itoa(i)+"-"+
 			strconv.Itoa(dataLen)+".json")
 		if err != nil {
 			fmt.Println("警告：保存json错误:", err)
