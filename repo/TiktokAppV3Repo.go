@@ -20,15 +20,15 @@ type tiktokAuthorWebData struct {
 	Code int `json:"code"`
 	Data struct {
 		UserInfo struct {
-			stats struct {
-				followerCount int `json:"followerCount"`
-				heartCount    int `json:"heartCount"`
-				videoCount    int `json:"videoCount"`
-				diggCount     int `json:"diggCount"`
+			Stats struct {
+				FollowerCount int `json:"followerCount"`
+				HeartCount    int `json:"heartCount"`
+				VideoCount    int `json:"videoCount"`
+				DiggCount     int `json:"diggCount"`
 			} `json:"stats"`
 		} `json:"userInfo"`
 		User struct {
-			verified bool `json:"verified"`
+			Verified bool `json:"verified"`
 		} `json:"user"`
 	} `json:"data"`
 }
@@ -362,11 +362,11 @@ func (repo *TiktokAppV3Repository) UpdateAuthorData() error {
 		fmt.Println("爬取作者信息成功：")
 
 		// 更新CSV
-		row[7] = fmt.Sprintf("%v", authData.Data.User.verified)
-		row[9] = fmt.Sprintf("%v", authData.Data.UserInfo.stats.followerCount)
-		row[10] = fmt.Sprintf("%v", authData.Data.UserInfo.stats.heartCount)
-		row[11] = fmt.Sprintf("%v", authData.Data.UserInfo.stats.videoCount)
-		row[12] = fmt.Sprintf("%v", authData.Data.UserInfo.stats.diggCount)
+		row[7] = fmt.Sprintf("%v", authData.Data.User.Verified)
+		row[9] = fmt.Sprintf("%v", authData.Data.UserInfo.Stats.FollowerCount)
+		row[10] = fmt.Sprintf("%v", authData.Data.UserInfo.Stats.HeartCount)
+		row[11] = fmt.Sprintf("%v", authData.Data.UserInfo.Stats.VideoCount)
+		row[12] = fmt.Sprintf("%v", authData.Data.UserInfo.Stats.DiggCount)
 		records[i] = row
 
 		fmt.Println("更新第", i, "行成功！")
@@ -500,11 +500,11 @@ func (repo *TiktokAppV3Repository) UpdateAuthorData2() error {
 			}
 
 			// Update row with new data
-			row[7] = fmt.Sprintf("%v", authData.Data.User.verified)
-			row[9] = fmt.Sprintf("%v", authData.Data.UserInfo.stats.followerCount)
-			row[10] = fmt.Sprintf("%v", authData.Data.UserInfo.stats.heartCount)
-			row[11] = fmt.Sprintf("%v", authData.Data.UserInfo.stats.videoCount)
-			row[12] = fmt.Sprintf("%v", authData.Data.UserInfo.stats.diggCount)
+			row[7] = fmt.Sprintf("%v", authData.Data.User.Verified)
+			row[9] = fmt.Sprintf("%v", authData.Data.UserInfo.Stats.FollowerCount)
+			row[10] = fmt.Sprintf("%v", authData.Data.UserInfo.Stats.HeartCount)
+			row[11] = fmt.Sprintf("%v", authData.Data.UserInfo.Stats.VideoCount)
+			row[12] = fmt.Sprintf("%v", authData.Data.UserInfo.Stats.DiggCount)
 
 			recordChan <- row
 			fmt.Printf("更新成功！作者名字：%s\n", authorName)
