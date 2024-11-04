@@ -12,18 +12,21 @@ import (
 	"tiktok-spider/repo"
 )
 
+// 爬取YouTube视频示例
 func crawlYoutube() {
-	// 启动爬虫客户端
+	// 准备爬虫参数
 	params := model.YoutubeParams{
 		SearchQuery:  "china travel",
 		LanguageCode: "en",
 		OrderBy:      "this_month",
 		CountryCode:  "us",
 	}
+	// 准备客户端
 	youtubeClient := client.NewYoutubeClient(params)
 	youtubeClient.SearchVideoAndStore()
 }
 
+// 基于TikTok的Web段接口爬虫示例（视频搜索接口）
 func crawlTiktokWeb() {
 	params := model.TiktokWebParamsSend{
 		Keyword: "China travel",
@@ -34,7 +37,9 @@ func crawlTiktokWeb() {
 	tiktokWebClient.SearchVideoAndStore()
 }
 
+// 基于TikTok的App接口爬虫示例（视频搜索接口｜标签搜索接口）
 func crawlTiktokAppV3() {
+	// 直接进行视频搜索（似乎视频量有限）
 	params := model.TiktokAppV3Params{
 		Keyword:     "china travel",
 		Offset:      660,
@@ -42,9 +47,11 @@ func crawlTiktokAppV3() {
 		SortType:    0,
 		PublishTime: 0,
 	}
+	// 根据标签搜索视频（视频量最大为5050）
 	tagParams := model.TiktokTagParams{
-		ChId:   "7884", // #travel
-		Cursor: 3340,
+		//ChId:   "7884", // #travel
+		ChId:   "74640468", // #chinatravel
+		Cursor: 0,
 		Count:  10,
 	}
 	v3Client := client.NewTiktokV3Client(params, tagParams)
@@ -52,16 +59,12 @@ func crawlTiktokAppV3() {
 	v3Client.SearchVideoByTagAndStore()
 }
 
+// 将TikTok-App爬取到的JSON视频数据整合到csv文件示例（需自行编写repo中的response结构体）
 func saveToCSV() {
 	repository := repo.NewTiktokAppV3Repository()
-	// 先处理tag系列的，第一批，编号744
-	//err := repository.DoneOne("./tiktok_app_v3/172961426355374_1-10.json")
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
 
-	// 匹配文件
-	dir := "./tiktok_app_v3_2"
+	// 匹配文件（需改成的json输出目录）
+	dir := "./tiktok_app_v3"
 
 	// 查找所有 .json 文件
 	files, err := filepath.Glob(filepath.Join(dir, "*.json"))
@@ -96,8 +99,8 @@ func saveToCSV() {
 			log.Println("Error converting second number:", err)
 			continue
 		}
-		// 过滤出符合条件的文件（第一个数字 1-66，第二个数字范围 1-10）
-		if firstNum >= 1 && firstNum <= 200 && secondNum >= 1 && secondNum <= 10 {
+		// 过滤出符合条件的文件（第一个数字 1-1000，第二个数字范围 1-10）
+		if firstNum >= 1 && firstNum <= 1000 && secondNum >= 1 && secondNum <= 10 {
 			fmt.Println("正在处理文件:", filename)
 			// 执行你要对文件的处理逻辑
 			_ = repository.DoneOne(file)
@@ -105,6 +108,7 @@ func saveToCSV() {
 	}
 }
 
+// UpdateAuthorData 额外补充的方法实示例，使用免费接口更新标签接口没有的作者信息
 func UpdateAuthorData() {
 	r := repo.NewTiktokAppV3Repository()
 	err := r.UpdateAuthorData2()
@@ -116,6 +120,7 @@ func UpdateAuthorData() {
 func main() {
 	// 加载配置
 	loadConf()
+
 	// 开启爬虫
 	//crawlYoutube()
 	//crawlTiktokWeb()
@@ -125,7 +130,7 @@ func main() {
 	//saveToCSV()
 
 	// 更新作者信息
-	UpdateAuthorData()
+	//UpdateAuthorData()
 }
 
 // 加载配置

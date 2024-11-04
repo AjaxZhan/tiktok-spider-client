@@ -16,6 +16,7 @@ import (
 	"time"
 )
 
+// TiktokAppV3Client 客户端，封装了http客户端
 type TiktokAppV3Client struct {
 	params         model.TiktokAppV3Params // 视频搜索爬虫参数
 	baseUrl        string                  // 视频搜索基础路径
@@ -228,7 +229,7 @@ func (yc *TiktokAppV3Client) SearchVideoByTagAndStore() {
 		dataLen := len(resp.Data.AwemeList)
 		// store
 		// 直接保存为json文件
-		err = utils.SaveToJSON(resp.Data.AwemeList, "./tiktok_app_v3_2/"+tempPrefix+"_"+strconv.Itoa(i)+"-"+
+		err = utils.SaveToJSON(resp.Data.AwemeList, "./tiktok_app_v3_china/"+tempPrefix+"_"+strconv.Itoa(i)+"-"+
 			strconv.Itoa(dataLen)+".json")
 		if err != nil {
 			fmt.Println("警告：保存json错误:", err)

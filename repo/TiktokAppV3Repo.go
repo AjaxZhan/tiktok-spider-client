@@ -15,7 +15,7 @@ import (
 
 // 此文件将爬取到的数据持久化数据库或者csv文件中
 
-// TiktokAuthorWebData 爬取作者相关信息
+// TiktokAuthorWebData 爬取作者相关信息的response
 type tiktokAuthorWebData struct {
 	Code int `json:"code"`
 	Data struct {
@@ -33,7 +33,7 @@ type tiktokAuthorWebData struct {
 	} `json:"data"`
 }
 
-// TiktokAppV3WebData 从TikTok爬到的数据
+// TiktokAppV3WebData 从TikTok爬到的数据的response
 type TiktokAppV3WebData struct {
 	Author struct {
 		Nickname  string `json:"nickname"`
@@ -149,7 +149,7 @@ type TiktokAppV3Repository struct {
 
 func NewTiktokAppV3Repository() *TiktokAppV3Repository {
 	return &TiktokAppV3Repository{
-		csvPath:           "./tiktok_app_v3_travel.csv",
+		csvPath:           "./tiktok_china_travel.csv",
 		authorInfoBaseUrl: "https://douyin.wtf/api/tiktok/web/fetch_user_profile",
 		httpClient: &http.Client{
 			Timeout: time.Second * 30,
@@ -298,9 +298,10 @@ func (repo *TiktokAppV3Repository) DoneOne(path string) error {
 	return nil
 }
 
+// UpdateAuthorData 旧版本的更新作者信息（暂不推荐使用）
 func (repo *TiktokAppV3Repository) UpdateAuthorData() error {
 	// 打开CSV文件
-	file, err := os.Open("./tiktok_app_v3_travel.csv")
+	file, err := os.Open("./china.csv")
 	if err != nil {
 		fmt.Println("无法打开文件:", err)
 		return err
@@ -390,10 +391,10 @@ func (repo *TiktokAppV3Repository) UpdateAuthorData() error {
 	return nil
 }
 
-// UpdateAuthorData2 使用并发编程的方式来更新作者信息
+// UpdateAuthorData2 使用并发编程的方式来更新作者信息（然而受到对方服务器并发数限制）
 func (repo *TiktokAppV3Repository) UpdateAuthorData2() error {
 	// Open CSV file for reading
-	file, err := os.Open("./tiktok_app_v3_travel_updated.csv")
+	file, err := os.Open("./tiktok_app_v3_china_travel_updated.csv")
 	if err != nil {
 		fmt.Println("无法打开文件:", err)
 		return err
@@ -451,7 +452,7 @@ func (repo *TiktokAppV3Repository) UpdateAuthorData2() error {
 
 	// Process records concurrently
 	for i, row := range records {
-		if i == 0 || row[4] == "" || row[9] != "" {
+		if i == 0 || row[4] == "" || (row[10] != "0" && row[10] != "") {
 			// Skip header or rows without authorName or updated record
 			continue
 		}
@@ -526,7 +527,7 @@ func (repo *TiktokAppV3Repository) UpdateAuthorData2() error {
 	}
 
 	// Write updated records to CSV
-	writeFile, err := os.Create("./tiktok_app_v3_travel_updated.csv")
+	writeFile, err := os.Create("./tiktok_app_v3_china_travel_updated.csv")
 	if err != nil {
 		fmt.Println("无法创建更新的文件:", err)
 		return err
@@ -547,7 +548,7 @@ func (repo *TiktokAppV3Repository) UpdateAuthorData2() error {
 
 // writeUpdatedRecordsToFile 将记录写入文件
 func writeUpdatedRecordsToFile(records [][]string) error {
-	writeFile, err := os.Create("./tiktok_app_v3_travel_updated.csv")
+	writeFile, err := os.Create("./tiktok_app_v3_china_travel_updated.csv")
 	if err != nil {
 		return err
 	}

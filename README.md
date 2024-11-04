@@ -8,11 +8,15 @@ This program is basically used to finish academic social analysis.
 
 This program is not directly sending http request to TikTok, instead, it sends http request to TikHub,a api server provider.
 
+This repository is currently only for my own use, with relatively complete comments,
+can provide basic shortcut code templates for friends who are too lazy to write their own http code.
+
 
 ## Quick start
 
-1. Load the configuration file
-2. Create the client as we did in `main.go`, then call the `xxxAndStore` method.
+1. Edit `config.json`, especially `token`.
+2. In `main.go`, Load the configuration file firstly.
+3. Create the client as we did in `main.go`, then call the `xxxAndStore` method.
 
 For example:
 ```go
@@ -45,6 +49,7 @@ func loadConf() {
 }
 ```
 
+Run the program:
 ```bash
 go run main.go
 ```
