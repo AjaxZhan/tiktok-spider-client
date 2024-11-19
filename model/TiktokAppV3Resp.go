@@ -37,3 +37,14 @@ type TiktokTagResponse struct {
 		Cursor    int           `json:"cursor"`
 	} `json:"data"`
 }
+
+// TiktokSearchVideoByUserResponse 标签搜索应答
+type TiktokSearchVideoByUserResponse struct {
+	Code   int    `json:"code"`
+	Router string `json:"router"`
+	Data   struct {
+		AwemeList []interface{} `json:"aweme_list"`
+		MaxCursor int           `json:"max_cursor"`
+		HasMore   int           `json:"has_more"`
+	} `json:"data"`
+}

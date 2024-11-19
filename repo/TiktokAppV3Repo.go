@@ -149,7 +149,7 @@ type TiktokAppV3Repository struct {
 
 func NewTiktokAppV3Repository() *TiktokAppV3Repository {
 	return &TiktokAppV3Repository{
-		csvPath:           "./tiktok_china_travel.csv",
+		csvPath:           "./tiktok_user.csv",
 		authorInfoBaseUrl: "https://douyin.wtf/api/tiktok/web/fetch_user_profile",
 		httpClient: &http.Client{
 			Timeout: time.Second * 30,
@@ -163,10 +163,10 @@ func NewTiktokAppV3Repository() *TiktokAppV3Repository {
 }
 
 // SaveToCSV 将数据写入CSV文件
-func (repo *TiktokAppV3Repository) SaveToCSV(datas []TiktokAppV3WebData) error {
+func (repo *TiktokAppV3Repository) SaveToCSV(datas []TiktokAppV3WebData, csvPath string) error {
 
 	// 创建CSV文件
-	csvFile, err := os.OpenFile(repo.csvPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	csvFile, err := os.OpenFile(csvPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return fmt.Errorf("无法创建CSV文件: %v", err)
 	}
@@ -282,14 +282,14 @@ func (repo *TiktokAppV3Repository) LoadFromJson(path string) ([]TiktokAppV3WebDa
 }
 
 // DoneOne 执行一次读取JSON并写CSV操作
-func (repo *TiktokAppV3Repository) DoneOne(path string) error {
+func (repo *TiktokAppV3Repository) DoneOne(path string, csvPath string) error {
 	// json路径先根据本地数据写死
 	data, err := repo.LoadFromJson(path)
 	if err != nil {
 		return err
 	}
 	// 写入csv
-	err = repo.SaveToCSV(data)
+	err = repo.SaveToCSV(data, csvPath)
 	if err != nil {
 		return err
 	}
